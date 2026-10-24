@@ -1,53 +1,42 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/password_entry.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
-
   DatabaseHelper._init();
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('passwords.db');
-    return _database!;
+  String? get _userId => FirebaseAuth.instance.currentUser?.uid;
+
+  Future<void> insert(PasswordEntry entry) async {
+    if (_userId == null) return;
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_userId)
+        .collection('passwords')
+        .add(entry.toMap());
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE passwords (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            username TEXT NOT NULL,
-            encryptedPassword TEXT NOT NULL,
-            iv TEXT NOT NULL
-          )
-        ''');
-      },
-    );
+  Stream<List<PasswordEntry>> getPasswordsStream() {
+    if (_userId == null) return Stream.value([]);
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(_userId)
+        .collection('passwords')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PasswordEntry.fromMap(doc.id, doc.data()))
+            .toList());
   }
 
-  Future<int> insert(PasswordEntry entry) async {
-    final db = await instance.database;
-    return await db.insert('passwords', entry.toMap());
-  }
-
-  Future<List<PasswordEntry>> getAll() async {
-    final db = await instance.database;
-    final result = await db.query('passwords', orderBy: 'title ASC');
-    return result.map((json) => PasswordEntry.fromMap(json)).toList();
-  }
-
-  Future<int> delete(int id) async {
-    final db = await instance.database;
-    return await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
+  Future<void> delete(String id) async {
+    if (_userId == null) return;
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_userId)
+        .collection('passwords')
+        .doc(id)
+        .delete();
   }
 }

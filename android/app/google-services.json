@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "962359924453",
+    "project_id": "password-9aea0",
+    "storage_bucket": "password-9aea0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962359924453:android:c3990b2bf84f4b8d26260c",
+        "android_client_info": {
+          "package_name": "com.password.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFQzPSzhUsMGF6CnxA9KS88ODbV3Ds2GM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

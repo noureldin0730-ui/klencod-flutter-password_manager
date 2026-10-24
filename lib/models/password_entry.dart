@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PasswordEntry {
-  final int? id;
+  final String? id;
   final String title;
   final String username;
   final String encryptedPassword;
-  final String iv; // Initialization Vector for AES
+  final String iv;
 
   PasswordEntry({
     this.id,
@@ -15,21 +17,21 @@ class PasswordEntry {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'title': title,
       'username': username,
       'encryptedPassword': encryptedPassword,
       'iv': iv,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
-  factory PasswordEntry.fromMap(Map<String, dynamic> map) {
+  factory PasswordEntry.fromMap(String id, Map<String, dynamic> map) {
     return PasswordEntry(
-      id: map['id'] as int?,
-      title: map['title'] as String,
-      username: map['username'] as String,
-      encryptedPassword: map['encryptedPassword'] as String,
-      iv: map['iv'] as String,
+      id: id,
+      title: map['title'] ?? '',
+      username: map['username'] ?? '',
+      encryptedPassword: map['encryptedPassword'] ?? '',
+      iv: map['iv'] ?? '',
     );
   }
 }

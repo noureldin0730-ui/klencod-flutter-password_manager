@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -10,88 +11,81 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _storage = const FlutterSecureStorage();
-  final _pinCtrl = TextEditingController();
-  bool _isSettingUp = false;
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _checkIfPinExists();
-  }
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
-  Future<void> _checkIfPinExists() async {
-    final pin = await _storage.read(key: 'app_pin');
-    if (pin == null) {
-      setState(() => _isSettingUp = true);
-    }
-  }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-  Future<void> _handlePin() async {
-    final pin = _pinCtrl.text.trim();
-    if (pin.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN يجب أن يكون 4 أرقام على الأقل')));
-      return;
-    }
-
-    if (_isSettingUp) {
-      await _storage.write(key: 'app_pin', value: pin);
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      
       if (mounted) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
       }
-    } else {
-      final savedPin = await _storage.read(key: 'app_pin');
-      if (pin == savedPin) {
-        if (mounted) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN خطأ')));
-        }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock, size: 80, color: Colors.teal),
-              const SizedBox(height: 20),
-              Text(
-                _isSettingUp ? 'قم بتعيين PIN لحماية تطبيقك' : 'أدخل PIN للدخول',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _pinCtrl,
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                textAlign: TextAlign.center,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: '****',
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.jpg'), // تأكد إن الصورة موجودة
+            fit: BoxFit.cover,
+            opacity: 0.4,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock, size: 80, color: Colors.teal),
+                const SizedBox(height: 20),
+                const Text(
+                  'مرحباً بك في خزنة الباسوردات',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _handlePin,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-                child: Text(_isSettingUp ? 'حفظ PIN' : 'دخول'),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'الحقوق محفوظة © 2026 Nour',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Colors.grey),
-              ),
-            ],
+                const SizedBox(height: 40),
+                _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : ElevatedButton.icon(
+                        onPressed: _signInWithGoogle,
+                        icon: const Icon(Icons.login),
+                        label: const Text('تسجيل الدخول بجوجل'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        ),
+                      ),
+                const SizedBox(height: 40),
+                const Text(
+                  'الحقوق محفوظة © 2026 Nour',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Colors.white70),
+                ),
+              ],
+            ),
           ),
         ),
       ),

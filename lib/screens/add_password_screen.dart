@@ -18,18 +18,14 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
     final encryptedData = await CryptoService.encrypt(_passwordCtrl.text.trim());
-
     final entry = PasswordEntry(
       title: _titleCtrl.text.trim(),
       username: _usernameCtrl.text.trim(),
       encryptedPassword: encryptedData['encryptedPassword']!,
       iv: encryptedData['iv']!,
     );
-
     await DatabaseHelper.instance.insert(entry);
-
     if (mounted) Navigator.pop(context, true);
   }
 

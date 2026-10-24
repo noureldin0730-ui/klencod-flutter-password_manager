@@ -18,3 +18,6 @@ dependencies:
 
 flutter:
   uses-material-design: true
+  # هنا عرفنا الفولدر اللي فيه الصور
+  assets:
+    - assets/images/

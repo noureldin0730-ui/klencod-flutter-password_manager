@@ -6,16 +6,13 @@ class CryptoService {
   static final _storage = const FlutterSecureStorage();
   static const _keyName = 'master_key_v1';
 
-  // دالة عشان نجيب المفتاح، لو مش موجود بنعمل واحد جديد ونحفظه في الـ Keystore
   static Future<Encrypter> _getEncrypter() async {
     String? base64Key = await _storage.read(key: _keyName);
-    
     if (base64Key == null) {
-      final key = Key.fromSecureRandom(32); // AES-256
+      final key = Key.fromSecureRandom(32);
       base64Key = base64Encode(key.bytes);
       await _storage.write(key: _keyName, value: base64Key);
     }
-    
     return Encrypter(AES(Key.fromBase64(base64Key)));
   }
 
@@ -23,7 +20,6 @@ class CryptoService {
     final encrypter = await _getEncrypter();
     final iv = IV.fromSecureRandom(16);
     final encrypted = encrypter.encrypt(plainText, iv: iv);
-    
     return {
       'encryptedPassword': encrypted.base64,
       'iv': iv.base64,
