@@ -9,8 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sqflite: ^2.3.0
-  path: ^1.8.3
+  # مكتبات Firebase اللي كانت ناقصة
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
+  cloud_firestore: ^4.15.8
+  google_sign_in: ^6.2.1
+  
+  # باقي المكتبات
   flutter_secure_storage: ^9.0.0
   encrypt: ^5.0.3
   crypto: ^3.0.3
@@ -18,6 +23,5 @@ dependencies:
 
 flutter:
   uses-material-design: true
-  # هنا عرفنا الفولدر اللي فيه الصور
   assets:
     - assets/images/
